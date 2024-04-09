@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { todo } from "node:test";
+import { prisma } from "../../data/postgres";
+import { CreateTodoDTO, UpdateTodoDTO } from "../../domain/dtos";
 
 let todos = [
     { id: 1, text: 'Comprar leche', fecha: new Date() },
@@ -12,74 +13,88 @@ export class TodosController {
     //* DI
     constructor() { }
 
-    public getTodos = (request: Request, response: Response) => {
+    public getTodos = async (request: Request, response: Response) => {
+
+        const todos = await prisma.todo.findMany();
+
         response.json(todos);
     }
 
-    public getTodosById = (request: Request, response: Response) => {
+    public getTodosById = async (request: Request, response: Response) => {
 
         const id = +request.params.id;
 
         if (isNaN(id)) return response.status(400).json({ error: `El argumento ID no es valido` });
 
-        const todo = todos.find(todo => todo.id == id);
-        (todo)
-            ? response.json(todo)
-            : response.status(404).json({ error: `Todo con ID ${request.params.id} no encontrado` });
+        const todo = await prisma.todo.findFirst({
+            where: {
+                id: id
+            }
+        });
+
+        if (!todo) return response.status(404).json({ error: `Todo con ID ${id} no encontrado` });
+
+        response.json(todo);
     }
 
-    public postTodo = (request: Request, response: Response) => {
-        const { text, fecha } = request.body;
+    public postTodo = async (request: Request, response: Response) => {
 
-        if (!text) return response.status(400).json({ error: `El argumento texto es requerido` });
+        const [error, createTodoDto] = CreateTodoDTO.create(request.body);
 
-        const newTodo = {
-            id: todos.length + 1,
-            text: text,
-            fecha: fecha
-        };
+        if (error) return response.status(400).json({ error });
 
-        todos.push(newTodo);
+        const todo = await prisma.todo.create({
+            data: createTodoDto!
+        });
 
-        response.json(todos);
+        response.json(todo);
     }
 
-    public putTodo = (request: Request, response: Response) => {
-        const { text, fecha } = request.body;
+    public putTodo = async (request: Request, response: Response) => {
+        const id = +request.params.id;
+        const [error, updateTodoDTO] = UpdateTodoDTO.create({ ...request.body, id });
+
+        if (error) return response.status(400).json({ error });
+
+        const todo = await prisma.todo.findFirst({
+            where: {
+                id: id
+            }
+        });
+
+        if (!todo) return response.status(404).json({ error: `Todo con ID ${id} no encontrado` });
+
+        const todoUpdated = await prisma.todo.update({
+            where: {
+                id: id
+            },
+            data: updateTodoDTO!.values
+        });
+
+        response.json(todoUpdated);
+    }
+
+    public deleteTodosById = async (request: Request, response: Response) => {
 
         const id = +request.params.id;
-        if (isNaN(id)) return response.status(400).json({ error: `El argumento ID no es valido` });
-
-        const todo = todos.find(todo => todo.id == id);
-
-        (todo)
-            ? response.json(todo)
-            : response.status(404).json({ error: `Todo con ID ${request.params.id} no encontrado` });
-
-        const newTodo = {
-            id: id,
-            text: text,
-            fecha: fecha
-        };
-
-        todos = todos.filter(m => m.id != id);
-        todos.push(newTodo);
-        response.json(todos);
-    }
-
-    public deleteTodosById = (request: Request, response: Response) => {
-
-        const id = +request.params.id;
 
         if (isNaN(id)) return response.status(400).json({ error: `El argumento ID no es valido` });
 
-        const todo = todos.find(todo => todo.id == id);
-        (todo)
-            ? response.json(todo)
-            : response.status(404).json({ error: `Todo con ID ${request.params.id} no encontrado` });
-        todos = todos.filter(m => m.id != id);
-        
-        response.json(todos);
+        const todo = await prisma.todo.findFirst({
+            where: {
+                id: id
+            }
+        });
+
+        if (!todo) return response.status(404).json({ error: `Todo con ID ${id} no encontrado` });
+
+        const todoRemoved = await prisma.todo.deleteMany({
+            where: {
+                id: id
+            }
+        });
+
+        response.json({ todo, todoRemoved });
     }
 
 }
