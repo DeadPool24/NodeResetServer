@@ -26,7 +26,7 @@ export class TodoEntity {
             }
         }
 
-        return new TodoEntity(fecha, text, id)
+        return new TodoEntity(id,text,fecha)
 
     }
 

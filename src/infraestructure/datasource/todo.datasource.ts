@@ -28,10 +28,9 @@ export class TodoDataSourceImp implements TodoDataSource {
 
     async updateById(updateById: UpdateTodoDTO): Promise<TodoEntity | undefined> {
         await this.findByID(updateById.id);
+
         const todoUpdated = await prisma.todo.update({
-            where: {
-                id: updateById.id
-            },
+            where: { id: updateById.id },
             data: updateById!.values
         });
 
