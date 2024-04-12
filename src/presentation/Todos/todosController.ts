@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { prisma } from "../../data/postgres";
 import { CreateTodoDTO, UpdateTodoDTO } from "../../domain/dtos";
+import { CreateTodo, DeleteTodo, GetTodo, GetTodos, TodoRepository, UpdateTodo } from "../../domain";
+import { create } from "domain";
 
 let todos = [
     { id: 1, text: 'Comprar leche', fecha: new Date() },
@@ -11,90 +13,54 @@ let todos = [
 export class TodosController {
 
     //* DI
-    constructor() { }
+    constructor(
+        private readonly todoRepository: TodoRepository
+    ) { }
 
-    public getTodos = async (request: Request, response: Response) => {
-
-        const todos = await prisma.todo.findMany();
-
-        response.json(todos);
+    public getTodos = (request: Request, response: Response) => {
+        new GetTodos(this.todoRepository)
+        .execute()
+        .then(todos => response.json(todos))
+        .catch(error => response.status(400).json({error}));
     }
 
-    public getTodosById = async (request: Request, response: Response) => {
-
+    public getTodosById = (request: Request, response: Response) => {
         const id = +request.params.id;
-
         if (isNaN(id)) return response.status(400).json({ error: `El argumento ID no es valido` });
 
-        const todo = await prisma.todo.findFirst({
-            where: {
-                id: id
-            }
-        });
-
-        if (!todo) return response.status(404).json({ error: `Todo con ID ${id} no encontrado` });
-
-        response.json(todo);
+        new GetTodo(this.todoRepository)
+        .execute(id)
+        .then(todo => response.json(todo))
+        .catch(error => response.status(400).json({error}));
     }
 
-    public postTodo = async (request: Request, response: Response) => {
-
+    public postTodo = (request: Request, response: Response) => {
         const [error, createTodoDto] = CreateTodoDTO.create(request.body);
-
         if (error) return response.status(400).json({ error });
-
-        const todo = await prisma.todo.create({
-            data: createTodoDto!
-        });
-
-        response.json(todo);
+        new CreateTodo(this.todoRepository)
+        .execute(createTodoDto!)
+        .then(todo => response.json(todo))
+        .catch(error => response.status(400).json({error}));
     }
 
-    public putTodo = async (request: Request, response: Response) => {
+    public putTodo = (request: Request, response: Response) => {
         const id = +request.params.id;
         const [error, updateTodoDTO] = UpdateTodoDTO.create({ ...request.body, id });
-
         if (error) return response.status(400).json({ error });
-
-        const todo = await prisma.todo.findFirst({
-            where: {
-                id: id
-            }
-        });
-
-        if (!todo) return response.status(404).json({ error: `Todo con ID ${id} no encontrado` });
-
-        const todoUpdated = await prisma.todo.update({
-            where: {
-                id: id
-            },
-            data: updateTodoDTO!.values
-        });
-
-        response.json(todoUpdated);
+        new UpdateTodo(this.todoRepository)
+        .execute(updateTodoDTO!)
+        .then(todo => response.json(todo))
+        .catch(error => response.status(400).json({error}));
     }
 
-    public deleteTodosById = async (request: Request, response: Response) => {
-
+    public deleteTodosById = (request: Request, response: Response) => {
         const id = +request.params.id;
-
         if (isNaN(id)) return response.status(400).json({ error: `El argumento ID no es valido` });
+        new DeleteTodo(this.todoRepository)
+        .execute(id!)
+        .then(todo => response.json(todo))
+        .catch(error => response.status(400).json({error}));
 
-        const todo = await prisma.todo.findFirst({
-            where: {
-                id: id
-            }
-        });
-
-        if (!todo) return response.status(404).json({ error: `Todo con ID ${id} no encontrado` });
-
-        const todoRemoved = await prisma.todo.deleteMany({
-            where: {
-                id: id
-            }
-        });
-
-        response.json({ todo, todoRemoved });
     }
 
 }
