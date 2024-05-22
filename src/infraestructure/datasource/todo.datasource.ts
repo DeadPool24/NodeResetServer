@@ -16,7 +16,7 @@ export class TodoDataSourceImp implements TodoDataSource {
         return todos.map(todo => TodoEntity.fromJson(todo));
     }
 
-    async findByID(id: number): Promise<TodoEntity | undefined> {
+    async findByID(id: number): Promise<TodoEntity> {
         const todo = await prisma.todo.findFirst({
             where: {
                 id: id
@@ -26,7 +26,7 @@ export class TodoDataSourceImp implements TodoDataSource {
         return TodoEntity.fromJson(todo);
     }
 
-    async updateById(updateById: UpdateTodoDTO): Promise<TodoEntity | undefined> {
+    async updateById(updateById: UpdateTodoDTO): Promise<TodoEntity> {
         await this.findByID(updateById.id);
 
         const todoUpdated = await prisma.todo.update({
@@ -37,7 +37,7 @@ export class TodoDataSourceImp implements TodoDataSource {
         return TodoEntity.fromJson(todoUpdated);
     }
 
-    async deleteById(id: number): Promise<TodoEntity | undefined> {
+    async deleteById(id: number): Promise<TodoEntity> {
         await this.findByID(id);
         const todoRemoved = await prisma.todo.deleteMany({
             where: {

@@ -1,14 +1,6 @@
 import { Request, Response } from "express";
-import { prisma } from "../../data/postgres";
 import { CreateTodoDTO, UpdateTodoDTO } from "../../domain/dtos";
 import { CreateTodo, DeleteTodo, GetTodo, GetTodos, TodoRepository, UpdateTodo } from "../../domain";
-import { create } from "domain";
-
-let todos = [
-    { id: 1, text: 'Comprar leche', fecha: new Date() },
-    { id: 2, text: 'Comprar manzanas', fecha: null },
-    { id: 3, text: 'Comprar agua', fecha: new Date() }
-];
 
 export class TodosController {
 

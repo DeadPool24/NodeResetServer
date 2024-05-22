@@ -13,13 +13,13 @@ constructor(
     getAll(): Promise<TodoEntity[]> {
         return this.datasource.getAll();
     }
-    findByID(id: number): Promise<TodoEntity | undefined> {
+    findByID(id: number): Promise<TodoEntity> {
         return this.datasource.findByID(id);
     }
-    updateById(updateById: UpdateTodoDTO): Promise<TodoEntity | undefined> {
+    updateById(updateById: UpdateTodoDTO): Promise<TodoEntity> {
         return this.datasource.updateById(updateById);
     }
-    deleteById(id: number): Promise<TodoEntity | undefined> {
+    deleteById(id: number): Promise<TodoEntity> {
         return this.datasource.deleteById(id);
     }
 
